@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#141010">
+<title>G-BOT · Foto Graciela</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ============================================================
+   G-BOT · el cuarto oscuro
+   La tablet vive en el mostrador. Se ve de lejos y de pie, así
+   que todo es grande. La paleta viene del cuarto de revelado:
+   negro cálido, luz de seguridad ámbar, papel fotográfico.
+   ============================================================ */
+:root{
+  --noche:#141010;
+  --carbon:#1F1815;
+  --humo:#2E2420;
+  --ambar:#F0A93C;
+  --brasa:#D8452C;
+  --papel:#F4EDE2;
+  --tenue:#9A8B7D;
+  --verde:#5AB87C;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:
+    radial-gradient(120% 80% at 50% -10%, #2A201B 0%, transparent 60%),
+    var(--noche);
+  color:var(--papel);
+  font-family:'Archivo',system-ui,sans-serif;
+  display:flex;flex-direction:column;
+  user-select:none;
+}
+h1,h2,.display{font-family:'Fraunces',Georgia,serif;font-weight:700}
+
+/* ---------- barra ---------- */
+.barra{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;flex:none;
+}
+.marca{display:flex;align-items:baseline;gap:10px}
+.marca .n{font-family:'Fraunces',serif;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.marca .s{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--tenue)}
+.engrane{
+  width:42px;height:42px;border:none;border-radius:12px;
+  background:var(--humo);color:var(--tenue);font-size:18px;cursor:pointer;
+}
+.engrane:active{transform:scale(.94)}
+
+/* ---------- escenario ---------- */
+.escena{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 24px 12px;gap:22px;min-height:0;
+}
+
+/* El diafragma: se abre al escuchar, se cierra al hablar.
+   Es el elemento del que se acuerda la gente.                */
+.ojo{position:relative;width:min(38vh,300px);aspect-ratio:1;flex:none}
+.ojo svg{width:100%;height:100%;display:block}
+.aro{
+  position:absolute;inset:-14px;border-radius:50%;
+  border:2px solid rgba(240,169,60,.16);
+  transition:transform .45s cubic-bezier(.4,0,.2,1), opacity .45s;
+}
+.halo{
+  position:absolute;inset:-40px;border-radius:50%;
+  background:radial-gradient(circle, rgba(240,169,60,.20) 0%, transparent 68%);
+  opacity:0;transition:opacity .5s;pointer-events:none;
+}
+body[data-modo="escucha"] .halo{opacity:1}
+body[data-modo="habla"]   .halo{opacity:.65;background:radial-gradient(circle, rgba(216,69,44,.22) 0%, transparent 68%)}
+.hoja{transform-origin:150px 150px;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+
+/* ---------- lo que se dice ---------- */
+.dicho{
+  text-align:center;max-width:760px;min-height:120px;
+  display:flex;flex-direction:column;justify-content:center;gap:10px;
+}
+.estado{
+  font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--tenue);
+}
+.frase{
+  font-family:'Fraunces',serif;font-weight:500;
+  font-size:clamp(21px,3.4vh,34px);line-height:1.28;
+  letter-spacing:-.01em;
+}
+.eco{
+  font-size:clamp(14px,1.9vh,18px);color:var(--tenue);font-style:italic;
+  min-height:1.4em;
+}
+
+/* ---------- el pedido ---------- */
+.pedido{
+  width:min(100%,660px);background:var(--carbon);
+  border:1px solid var(--humo);border-radius:var(--r);
+  padding:14px 18px;flex:none;
+  max-height:26vh;overflow-y:auto;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .4s,transform .4s;
+}
+.pedido.hay{opacity:1;transform:none}
+.pedido h2{
+  margin:0 0 8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ambar);font-family:'Archivo',sans-serif;font-weight:700;
+}
+.linea{display:flex;justify-content:space-between;gap:14px;padding:5px 0;font-size:16px}
+.linea .c{color:var(--tenue);font-variant-numeric:tabular-nums}
+.total{
+  display:flex;justify-content:space-between;margin-top:9px;padding-top:9px;
+  border-top:1px solid var(--humo);font-size:20px;font-weight:700;
+}
+.total .m{color:var(--ambar);font-variant-numeric:tabular-nums}
+.quien{margin-top:8px;font-size:14px;color:var(--tenue)}
+
+/* ---------- pie ---------- */
+.pie{flex:none;padding:0 24px 22px;display:flex;gap:12px;justify-content:center}
+.btn{
+  border:none;border-radius:14px;padding:15px 26px;
+  font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;cursor:pointer;
+  background:var(--humo);color:var(--papel);
+}
+.btn.pri{background:var(--ambar);color:#241A0C}
+.btn.fan{background:var(--brasa);color:#fff}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.4}
+
+/* ---------- arranque ---------- */
+.portada{
+  position:fixed;inset:0;z-index:40;
+  background:var(--noche);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  padding:30px;text-align:center;
+}
+.portada h1{font-size:clamp(32px,6vh,54px);margin:0;letter-spacing:-.02em}
+.portada p{color:var(--tenue);max-width:440px;margin:0;font-size:16px;line-height:1.55}
+.portada .btn{font-size:19px;padding:19px 40px}
+
+/* ---------- admin ---------- */
+.velo{
+  position:fixed;inset:0;z-index:50;background:rgba(10,7,6,.9);
+  display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;
+}
+.velo.on{display:flex}
+.panel{
+  background:var(--carbon);border:1px solid var(--humo);border-radius:20px;
+  padding:24px;width:min(100%,620px);margin:auto;
+}
+.panel h2{margin:0 0 4px;font-size:24px}
+.panel .sub{color:var(--tenue);font-size:14px;margin:0 0 20px}
+label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ambar);margin:16px 0 6px;font-weight:700}
+input,textarea{
+  width:100%;background:var(--noche);border:1px solid var(--humo);
+  border-radius:11px;padding:13px;color:var(--papel);
+  font-family:'Archivo',sans-serif;font-size:15px;
+}
+textarea{min-height:190px;resize:vertical;line-height:1.6}
+input:focus,textarea:focus{outline:2px solid var(--ambar);outline-offset:1px}
+.ayuda{font-size:13px;color:var(--tenue);margin:7px 0 0;line-height:1.5}
+.fila{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.fila .btn{flex:1;min-width:130px}
+.msg{margin-top:12px;font-size:14px;min-height:1.3em}
+.msg.ok{color:var(--verde)} .msg.mal{color:var(--brasa)}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--humo);border-radius:9px;padding:7px 12px;font-size:13px;margin:3px 5px 0 0}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body data-modo="quieto">
+
+<!-- ══════════ ARRANQUE ══════════ -->
+<div class="portada" id="portada">
+  <div class="marca" style="justify-content:center">
+    <span class="s">Foto Estudio</span>
+  </div>
+  <h1>Graciela</h1>
+  <p id="portadaTxt">Toque la pantalla para que el asistente empiece a escuchar.</p>
+  <button class="btn pri" id="bEmpezar">Empezar a atender</button>
+  <button class="engrane" id="bAdmin1" style="position:absolute;top:18px;right:18px">⚙</button>
+</div>
+
+<!-- ══════════ MOSTRADOR ══════════ -->
+<div class="barra">
+  <div class="marca">
+    <span class="n">Graciela</span>
+    <span class="s">Asistente</span>
+  </div>
+  <button class="engrane" id="bAdmin2">⚙</button>
+</div>
+
+<div class="escena">
+  <div class="ojo">
+    <div class="halo"></div>
+    <div class="aro" id="aro"></div>
+    <svg viewBox="0 0 300 300" id="diafragma" aria-hidden="true">
+      <defs>
+        <radialGradient id="luz" cx="50%" cy="42%">
+          <stop offset="0%"  stop-color="#FFD79A"/>
+          <stop offset="55%" stop-color="#F0A93C"/>
+          <stop offset="100%" stop-color="#C4761F"/>
+        </radialGradient>
+      </defs>
+      <circle cx="150" cy="150" r="120" fill="#0D0908"/>
+      <circle cx="150" cy="150" r="120" fill="url(#luz)" id="pupila" opacity=".9"/>
+      <g id="hojas"></g>
+      <circle cx="150" cy="150" r="121" fill="none" stroke="#3A2E27" stroke-width="6"/>
+    </svg>
+  </div>
+
+  <div class="dicho">
+    <div class="estado" id="estado">Listo</div>
+    <div class="frase"  id="frase">Bienvenido a Foto Graciela, ¿en qué le puedo servir?</div>
+    <div class="eco"    id="eco"></div>
+  </div>
+
+  <div class="pedido" id="pedido">
+    <h2>Su pedido</h2>
+    <div id="lineas"></div>
+    <div class="total"><span>Total</span><span class="m" id="totalTxt">$0.00</span></div>
+    <div class="quien" id="quienTxt"></div>
+  </div>
+</div>
+
+<div class="pie">
+  <button class="btn" id="bHablar">🎙 Hablar</button>
+  <button class="btn fan" id="bReiniciar">Empezar de nuevo</button>
+</div>
+
+<!-- ══════════ ADMIN ══════════ -->
+<div class="velo" id="velo">
+  <div class="panel">
+    <div id="adLogin">
+      <h2>Entrar</h2>
+      <p class="sub">Con su usuario del Punto de Venta.</p>
+      <label for="adU">Usuario</label>
+      <input id="adU" autocomplete="username">
+      <label for="adP">Contraseña</label>
+      <input id="adP" type="password" autocomplete="current-password">
+      <div class="fila">
+        <button class="btn" id="adCerrar1">Cancelar</button>
+        <button class="btn pri" id="adEntrar">Entrar</button>
+      </div>
+      <div class="msg" id="adMsg1"></div>
+    </div>
+
+    <div id="adPanel" hidden>
+      <h2>Capacitar al asistente</h2>
+      <p class="sub">Lo que escriba aquí lo va a seguir al pie de la letra con cada cliente.</p>
+
+      <label for="adSaludo">Con qué recibe</label>
+      <input id="adSaludo" placeholder="Bienvenido a Foto Graciela, ¿en qué le puedo servir?">
+
+      <label for="adReglas">Reglas de la casa</label>
+      <textarea id="adReglas" placeholder="Ejemplos:&#10;· Las fotos del mismo día están listas en 20 minutos, es el mismo proceso que las del siguiente día.&#10;· No hacemos descuentos por cantidad en identificaciones.&#10;· Si preguntan por credenciales escolares, pasarlos con una persona.&#10;· El horario es de 9 a 7, domingos cerrado."></textarea>
+      <p class="ayuda">Escriba una por renglón, como si se lo explicara a alguien nuevo. Los precios no hace falta ponerlos: los lee solo del catálogo.</p>
+
+      <label>Estado</label>
+      <div class="fila" style="margin-top:0">
+        <button class="btn" id="adPrender">Prendido</button>
+        <button class="btn" id="adApagar">Apagado</button>
+      </div>
+
+      <div id="adStats" style="margin-top:20px"></div>
+
+      <div class="fila">
+        <button class="btn" id="adCerrar2">Cerrar</button>
+        <button class="btn pri" id="adGuardar">Guardar</button>
+      </div>
+      <div class="msg" id="adMsg2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURACIÓN
+   ═══════════════════════════════════════════════════════════ */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbxN01-DfwGkwwfilu6lfk_AYMMLa1S2SfJCkKYRMOYve948MtRB93N9blMU9vamD72I/exec";
+const PIN      = "100715";
+const SUPA_URL = "https://ezbvcwteeggvlpyqgcer.supabase.co";
+const SUPA_KEY = "sb_publishable_44SQZF-WnOIBSADrP6Jwsg_daAiQ-nR";
+const MODELO   = "claude-haiku-4-5-20251001";
+
+const BIZ = {
+  name:'Foto Estudio Graciela',
+  addr:'Zapata 13-B, Centro, Iguala de la Independencia, Gro. C.P. 40000',
+  tel:'733 118 0349 · 733 332 1187'
+};
+
+let SB=null;
+try{ SB = supabase.createClient(SUPA_URL, SUPA_KEY); }catch(e){}
+
+const $ = s => document.querySelector(s);
+
+/* ═══════════════════════════════════════════════════════════
+   EL DIAFRAGMA
+   Seis hojas que se abren al escuchar y se cierran al hablar.
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  const g = $('#hojas');
+  for(let i=0;i<6;i++){
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M150 150 L150 20 A130 130 0 0 1 262 85 Z');
+    p.setAttribute('fill','#1B1512');
+    p.setAttribute('stroke','#0D0908');
+    p.setAttribute('stroke-width','1.5');
+    p.setAttribute('class','hoja');
+    p.style.transform = 'rotate('+(i*60)+'deg)';
+    g.appendChild(p);
+  }
+})();
+
+let aperturaActual = 0;
+function abrir(v){                       // 0 = cerrado, 1 = abierto de par en par
+  v = Math.max(0, Math.min(1, v));
+  aperturaActual = v;
+  const escala = 1 - v*0.78;             // las hojas se encogen al abrir
+  document.querySelectorAll('.hoja').forEach((h,i)=>{
+    h.style.transform = 'rotate('+(i*60 + v*22)+'deg) scale('+escala+')';
+  });
+  const aro = $('#aro');
+  if(aro) aro.style.transform = 'scale('+(1 + v*0.06)+')';
+}
+
+function modo(m){                        // quieto · escucha · piensa · habla
+  document.body.dataset.modo = m;
+  const t = { quieto:'Listo', escucha:'Escuchando', piensa:'Un momento', habla:'Hablando' };
+  $('#estado').textContent = t[m] || '';
+  if(m==='escucha') abrir(.55);
+  else if(m==='habla') abrir(.22);
+  else if(m==='piensa') abrir(.35);
+  else abrir(.08);
+}
+abrir(.08);
+
+function decir(txt){ $('#frase').textContent = txt; }
+function eco(txt){ $('#eco').textContent = txt ? '“'+txt+'”' : ''; }
+
+/* ═══════════════════════════════════════════════════════════
+   VOZ · HABLAR
+   ═══════════════════════════════════════════════════════════ */
+let vozMX = null;
+function elegirVoz(){
+  const vs = speechSynthesis.getVoices();
+  vozMX = vs.find(v=>/es[-_]MX/i.test(v.lang) && /google/i.test(v.name))
+       || vs.find(v=>/es[-_]MX/i.test(v.lang))
+       || vs.find(v=>/es[-_]US/i.test(v.lang))
+       || vs.find(v=>/^es/i.test(v.lang)) || null;
+}
+elegirVoz();
+speechSynthesis.onvoiceschanged = elegirVoz;
+
+let hablando = false;
+let textoHablando = '';     // para reconocer el eco del propio bot
+let arrancoHabla = 0;
+
+/* ---------- voz natural ----------
+   Primero se intenta la voz de OpenAI, que suena a persona. Si no se
+   puede (sin internet, sin saldo, o está puesta la del aparato), se usa
+   la del navegador. Nunca se queda callado.                          */
+let audio = null;           // el reproductor, uno solo para todo
+let vozNaturalSirve = true; // si falla, deja de intentarlo esta sesión
+const cacheVoz = new Map(); // frases que se repiten (el saludo, sobre todo)
+
+function prepararAudio(){   // hay que crearlo con un toque del usuario
+  if(audio) return;
+  audio = new Audio();
+  audio.preload = 'auto';
+}
+
+async function pedirVoz(txt){
+  if(!vozNaturalSirve) return null;
+  if(cacheVoz.has(txt)) return cacheVoz.get(txt);
+  try{
+    const r = await fetch(ENDPOINT, { method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'gbotvoz', texto:txt }) });
+    const d = await r.json();
+    if(!d || !d.ok || !d.mp3){ vozNaturalSirve = false; return null; }
+    const url = 'data:audio/mpeg;base64,' + d.mp3;
+    if(cacheVoz.size < 20) cacheVoz.set(txt, url);   // el saludo no se vuelve a pedir
+    return url;
+  }catch(e){ vozNaturalSirve = false; return null; }
+}
+
+function hablar(txt){
+  return new Promise(async res=>{
+    if(!txt){ res(); return; }
+    callar();
+    hablando = true; textoHablando = normal(txt); arrancoHabla = Date.now();
+    modo('habla');
+
+    const terminar = ()=>{
+      hablando = false; textoHablando = '';
+      if(atendiendo) modo('escucha'); else modo('quieto');
+      res();
+    };
+
+    // 1) La voz buena
+    const url = await pedirVoz(txt);
+    if(!hablando){ res(); return; }            // lo cortaron mientras se generaba
+
+    if(url && audio){
+      try{
+        audio.src = url;
+        arrancoHabla = Date.now();             // el reloj corre desde que suena
+        audio.onended = terminar;
+        audio.onerror = ()=> vozAparato(txt, terminar);
+        await audio.play();
+        return;
+      }catch(e){ /* el navegador no dejó: se va a la del aparato */ }
+    }
+    // 2) La del aparato
+    vozAparato(txt, terminar);
+  });
+}
+
+function vozAparato(txt, terminar){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = 'es-MX';
+  if(vozMX) u.voice = vozMX;
+  u.rate = 1.02; u.pitch = 1.0; u.volume = 1;
+  arrancoHabla = Date.now();
+  u.onend = u.onerror = terminar;
+  speechSynthesis.speak(u);
+}
+
+function callar(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  if(audio){ try{ audio.pause(); audio.currentTime = 0; }catch(e){} }
+  hablando = false; textoHablando = '';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VOZ · ESCUCHAR  (con corte cuando el cliente habla)
+
+   El micrófono sigue abierto mientras el bot habla, para poder
+   cortarlo. El problema es que también se oye a sí mismo por la
+   bocina. Por eso se descarta lo que se parezca a lo que está
+   diciendo, y lo muy cortito.
+   ═══════════════════════════════════════════════════════════ */
+const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, escuchando = false, atendiendo = false;
+let buffer = '', temporizador = null;
+
+function normal(s){
+  return String(s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9ñ ]/g,' ').replace(/\s+/g,' ').trim();
+}
+/* ¿Lo que oyó es el propio bot rebotando en la bocina? */
+function esEco(txt){
+  if(!hablando || !textoHablando) return false;
+  const t = normal(txt);
+  if(!t) return true;
+  if(textoHablando.includes(t)) return true;          // pedazo de lo que dice
+  const pal = t.split(' ').filter(p=>p.length>3);
+  if(!pal.length) return true;
+  const dentro = pal.filter(p=>textoHablando.includes(p)).length;
+  return (dentro / pal.length) > 0.6;                 // se parece demasiado
+}
+
+function iniciarEscucha(){
+  if(!Rec){ decir('Esta tablet no puede escuchar. Use Chrome.'); return; }
+  if(rec) return;
+  rec = new Rec();
+  rec.lang = 'es-MX';
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = ev=>{
+    let parcial = '', firme = '';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const r = ev.results[i];
+      if(r.isFinal) firme += r[0].transcript;
+      else parcial += r[0].transcript;
+    }
+    const vivo = (firme || parcial).trim();
+    if(!vivo) return;
+
+    // Cortar al bot en cuanto el cliente empieza a hablar
+    if(hablando){
+      const yaVaRato = Date.now() - arrancoHabla > 350;   // no cortarse al primer instante
+      if(yaVaRato && vivo.length > 4 && !esEco(vivo)){
+        callar();
+        modo('escucha');
+      } else {
+        return;    // era su propio eco: se ignora
+      }
+    }
+
+    eco(vivo);
+    if(firme){
+      buffer += (buffer ? ' ' : '') + firme.trim();
+      esperarSilencio();
+    } else {
+      esperarSilencio(1400);   // por si nunca marca "final"
+    }
+  };
+
+  rec.onerror = e=>{
+    if(e.error === 'not-allowed'){
+      decir('Hace falta dar permiso al micrófono.');
+      atendiendo = false; modo('quieto');
+    }
+  };
+  rec.onend = ()=>{
+    escuchando = false;
+    if(atendiendo){ try{ rec.start(); escuchando = true; }catch(e){} }
+  };
+
+  try{ rec.start(); escuchando = true; }catch(e){}
+}
+
+/* Cuando deja de hablar un momento, se manda lo que dijo */
+function esperarSilencio(ms){
+  clearTimeout(temporizador);
+  temporizador = setTimeout(()=>{
+    const txt = buffer.trim();
+    buffer = '';
+    if(txt) mandar(txt);
+  }, ms || 950);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EL CATÁLOGO Y LAS REGLAS
+   ═══════════════════════════════════════════════════════════ */
+let CATALOGO = [], REGLAS = '', SALUDO = 'Bienvenido a Foto Graciela, ¿en qué le puedo servir?';
+let PRENDIDO = true;
+
+async function cargarTodo(){
+  // Precios, en vivo desde el POS
+  try{
+    const { data } = await SB.from('kv').select('value').eq('key','catalog').maybeSingle();
+    if(data && data.value) CATALOGO = data.value;
+  }catch(e){}
+  // Entrenamiento
+  try{
+    const r = await fetch(ENDPOINT, { method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'gbotreglas' }) });
+    const d = await r.json();
+    if(d && d.ok){
+      REGLAS = d.reglas || '';
+      SALUDO = d.saludo || SALUDO;
+      PRENDIDO = d.prendido !== false;
+    }
+  }catch(e){}
+}
+
+/* Solo lo que se vende al público, en texto para la IA */
+function catalogoTexto(){
+  const cats = (CATALOGO||[]).filter(c=>c.tier==='publico');
+  if(!cats.length) return '(no se pudo leer el catálogo)';
+  return cats.map(c=>{
+    const items = (c.items||[]).map(it=>'    · '+it.n+' — $'+it.p).join('\n');
+    return '  ['+c.name+']'+(c.note?'  ('+c.note+')':'')+'\n'+items;
+  }).join('\n\n');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LA CONVERSACIÓN
+   ═══════════════════════════════════════════════════════════ */
+let HIST = [], pedido = { items:[], cliente:'', telefono:'' }, ocupado = false;
+
+function instrucciones(){
+  return `Eres el asistente de voz de Foto Estudio Graciela, una fotografía en Iguala, Guerrero.
+Estás en una tablet en el mostrador. La gente te HABLA: te oyen, no te leen.
+
+CÓMO HABLAS
+- En español de México, de usted, cálido y breve. Frases cortas.
+- Como te escuchan, NUNCA uses listas, viñetas, asteriscos ni símbolos. Solo habla.
+- Una pregunta a la vez. Nada de párrafos largos.
+- Si no entendiste, pide que lo repitan sin rodeos.
+
+LO QUE VENDEMOS Y LO QUE CUESTA
+${catalogoTexto()}
+
+REGLAS DE PRECIO
+- Los precios de arriba son los buenos. Nunca inventes uno ni prometas descuentos.
+- Muchos productos vienen en dos versiones: "mismo día" y "siguiente día". El del mismo día cuesta más.
+- Cuando alguien pida algo que tenga las dos, dile los dos precios y deja que escoja.
+
+CÓMO ATIENDES
+1. Averigua qué quiere. Si aplica, pregunta si a color o en blanco y negro.
+2. Dile el precio. Si hay mismo día y siguiente día, dile los dos.
+3. Contesta lo que pregunte con calma.
+4. Cuando ya sepas qué lleva, confirma en voz alta el producto y el total.
+5. Pide su nombre. REPÍTESELO y pregunta si está bien. Si dice que no, corrige.
+6. Pide su teléfono. REPÍTESELO número por número y pregunta si está bien. Si dice que no, corrige.
+7. Ya con todo confirmado, usa la herramienta cerrar_pedido.
+8. Al final: dile que pase a la caja a pagar y recoger su ticket.
+
+NUNCA cierres el pedido sin que el cliente haya confirmado su nombre y su teléfono.
+Si alguien nada más pregunta y no quiere comprar, atiéndelo igual y despídete amable.
+${REGLAS ? '\nLO QUE TE ENSEÑARON EN LA CASA (esto manda sobre lo demás):\n'+REGLAS : ''}`;
+}
+
+const HERRAMIENTAS = [{
+  name:'cerrar_pedido',
+  description:'Cierra la venta: genera el ticket y lo manda a la impresora del mostrador. Úsala SOLO cuando el cliente ya confirmó qué lleva, su nombre y su teléfono.',
+  input_schema:{ type:'object', properties:{
+    cliente:{ type:'string', description:'Nombre del cliente, ya confirmado por él' },
+    telefono:{ type:'string', description:'Teléfono, ya confirmado por él' },
+    items:{ type:'array', description:'Lo que lleva',
+      items:{ type:'object', properties:{
+        producto:{ type:'string', description:'Nombre EXACTO del producto, como aparece en el catálogo' },
+        cantidad:{ type:'number' }
+      }, required:['producto','cantidad'] } }
+  }, required:['cliente','telefono','items'] }
+}];
+
+async function mandar(texto){
+  if(ocupado) return;
+  ocupado = true; eco(''); modo('piensa');
+  HIST.push({ role:'user', content: texto });
+  if(HIST.length > 24) HIST = HIST.slice(-24);
+
+  try{
+    let seguir = true, vueltas = 0;
+    while(seguir && vueltas < 3){
+      vueltas++;
+      const r = await fetch(ENDPOINT, { method:'POST', redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'ia', pin:PIN, model:MODELO, max_tokens:700,
+          system: instrucciones(), messages: HIST, tools: HERRAMIENTAS }) });
+      const d = await r.json();
+      if(d.error) throw new Error(d.error.message||'ia');
+
+      const bloques = d.content || [];
+      const dicho = bloques.filter(b=>b.type==='text').map(b=>b.text).join(' ').trim();
+      const usos  = bloques.filter(b=>b.type==='tool_use');
+      HIST.push({ role:'assistant', content: bloques });
+
+      if(dicho){ decir(dicho); await hablar(dicho); }
+
+      if(usos.length){
+        const results = [];
+        for(const u of usos){
+          if(u.name === 'cerrar_pedido'){
+            const res = await cerrarPedido(u.input||{});
+            results.push({ type:'tool_result', tool_use_id:u.id, content: res });
+          }
+        }
+        HIST.push({ role:'user', content: results });
+        seguir = true;
+      } else seguir = false;
+    }
+  }catch(e){
+    const s = 'Perdón, se me fue la señal. ¿Me lo repite?';
+    decir(s); await hablar(s);
+  }
+  ocupado = false;
+  if(atendiendo) modo('escucha');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CERRAR LA VENTA
+   ═══════════════════════════════════════════════════════════ */
+function buscarProducto(nombre){
+  const n = normal(nombre);
+  for(const c of (CATALOGO||[])){
+    if(c.tier !== 'publico') continue;
+    for(const it of (c.items||[])){
+      if(normal(it.n) === n) return { cat:c, it:it };
+    }
+  }
+  for(const c of (CATALOGO||[])){        // segunda pasada, más floja
+    if(c.tier !== 'publico') continue;
+    for(const it of (c.items||[])){
+      if(normal(it.n).includes(n) || n.includes(normal(it.n))) return { cat:c, it:it };
+    }
+  }
+  return null;
+}
+
+function pintarPedido(){
+  const cont = $('#lineas'); if(!cont) return;
+  if(!pedido.items.length){ $('#pedido').classList.remove('hay'); return; }
+  cont.innerHTML = pedido.items.map(l=>
+    '<div class="linea"><span>'+l.qty+' × '+l.name+'</span>'+
+    '<span class="c">$'+(l.price*l.qty).toFixed(2)+'</span></div>').join('');
+  const t = pedido.items.reduce((a,l)=>a+l.price*l.qty,0);
+  $('#totalTxt').textContent = '$'+t.toFixed(2);
+  $('#quienTxt').textContent = [pedido.cliente, pedido.telefono].filter(Boolean).join(' · ');
+  $('#pedido').classList.add('hay');
+}
+
+async function cerrarPedido(inp){
+  const items = [];
+  const noHallados = [];
+  (inp.items||[]).forEach(x=>{
+    const h = buscarProducto(x.producto);
+    if(!h){ noHallados.push(x.producto); return; }
+    items.push({ name:h.it.n, cat:h.cat.name, catId:h.cat.id, itemId:h.it.id,
+                 price:Number(h.it.p)||0, qty:Math.max(1, Number(x.cantidad)||1),
+                 folio:!!h.cat.folio, custom:false });
+  });
+  if(!items.length){
+    return 'No encontré esos productos en el catálogo: '+noHallados.join(', ')+
+           '. Pregúntale al cliente de nuevo qué quiere, con los nombres del catálogo.';
+  }
+
+  pedido.items = items;
+  pedido.cliente  = String(inp.cliente||'').trim().toUpperCase();
+  pedido.telefono = String(inp.telefono||'').replace(/[^\d]/g,'');
+  pintarPedido();
+
+  const total = items.reduce((a,l)=>a+l.price*l.qty,0);
+
+  // Folio: el mismo contador del POS
+  let folio = null;
+  try{
+    const { data, error } = await SB.rpc('siguiente_folio');
+    if(!error) folio = data;
+  }catch(e){}
+
+  const venta = {
+    folio, ts:new Date().toISOString(), user:'G-BOT',
+    tier:'publico', cliente:pedido.cliente, telefono:pedido.telefono,
+    tipos:[], color:null,
+    indicaciones:'Pedido levantado por el asistente del mostrador', indEsp:'',
+    items, total,
+    anticipo:0, resta:total, method:'Adeuda', recibido:0, cambio:0
+  };
+
+  try{
+    const { data, error } = await SB.from('ventas').insert(filaVenta(venta)).select().single();
+    if(error && error.code !== '23505') throw error;
+    if(data) venta.id = data.id;
+  }catch(e){
+    return 'No se pudo guardar la venta. Dile al cliente que pase a la caja de todos modos.';
+  }
+
+  const impreso = await mandarAImprimir(venta);
+  return 'Listo. Ticket '+(folio?('folio '+folio):'')+' generado'+
+         (impreso?' y enviado a la impresora':' (no se pudo imprimir; que pase a la caja)')+
+         '. Ahora despídete: dile que pase a la caja a pagar y a recoger su ticket.';
+}
+
+function filaVenta(s){
+  return { folio:s.folio, ts:s.ts, usuario:s.user, tier:s.tier,
+    cliente:s.cliente, telefono:s.telefono, tipos:s.tipos, color:s.color,
+    indicaciones:s.indicaciones, ind_esp:s.indEsp, items:s.items,
+    total:s.total, anticipo:s.anticipo, resta:s.resta,
+    method:s.method, recibido:s.recibido, cambio:s.cambio };
+}
+
+async function mandarAImprimir(s){
+  try{
+    const id = 'printjob:'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+    const b64 = bytesB64(escposTicket(s));
+    const { error } = await SB.from('kv').insert({ key:id, value:{ tipo:'escpos', b64:b64, ts:Date.now() } });
+    if(error) throw error;
+    try{ fetch(ENDPOINT, { method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'gbotventa' }) }); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TICKET EN ESC/POS  (el mismo formato que usa el POS)
+   ═══════════════════════════════════════════════════════════ */
+const CP850={'á':0xA0,'é':0x82,'í':0xA1,'ó':0xA2,'ú':0xA3,'Á':0xB5,'É':0x90,'Í':0xD6,'Ó':0xE0,'Ú':0xE9,
+  'ñ':0xA4,'Ñ':0xA5,'ü':0x81,'Ü':0x9A,'°':0xF8,'¡':0xAD,'¿':0xA8,'"':0x22};
+function cp850Push(str,o){ str=String(str); for(let k=0;k<str.length;k++){ const ch=str[k]; const m=CP850[ch]; if(m!=null)o.push(m); else{ const c=str.charCodeAt(k); o.push(c<128?c:0x3F);} } }
+function folioFmt(n){ return (n==null||n==='') ? '' : String(n).padStart(4,'0'); }
+function bytesB64(arr){
+  let bin=''; const u=new Uint8Array(arr);
+  for(let i=0;i<u.length;i++) bin+=String.fromCharCode(u[i]);
+  return btoa(bin);
+}
+function escposTicket(s){
+  const W=48, o=[];
+  const RAW=function(){ for(let i=0;i<arguments.length;i++) o.push(arguments[i]); };
+  const T=function(str){ cp850Push(str,o); };
+  const NL=function(){ o.push(0x0A); };
+  const LINE=function(){ T('-'.repeat(W)); NL(); };
+  const money=function(v){ return '$'+(Number(v)||0).toFixed(2); };
+  const row=function(izq,der){ let esp=W-izq.length-der.length; if(esp<1){ izq=izq.slice(0,Math.max(0,W-der.length-1)); esp=1; } T(izq+' '.repeat(esp)+der); NL(); };
+  const d=new Date(s.ts);
+  const anticipo=s.anticipo!=null?s.anticipo:s.total; const resta=s.resta!=null?s.resta:0;
+
+  RAW(0x1B,0x40); RAW(0x1B,0x74,0x02); RAW(0x1B,0x61,0x01);
+  RAW(0x1D,0x21,0x11); RAW(0x1B,0x45,0x01); T(BIZ.name); NL();
+  RAW(0x1D,0x21,0x00); RAW(0x1B,0x45,0x00);
+  T(BIZ.addr); NL(); T('Tel: '+BIZ.tel); NL();
+  RAW(0x1B,0x45,0x01); NL(); T('NOTA DE VENTA'); NL(); RAW(0x1B,0x45,0x00);
+  RAW(0x1B,0x61,0x00);
+  T(d.toLocaleDateString('es-MX')+' '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})); NL();
+  if(s.cliente){ T('Cliente: '+s.cliente); NL(); }
+  if(s.telefono){ T('Telefono: '+s.telefono); NL(); }
+  LINE();
+  (s.items||[]).forEach(function(i){ T(i.name); NL(); row('  '+i.qty+' x '+money(i.price), money(i.price*i.qty)); });
+  LINE();
+  row('ANTICIPO:', money(anticipo));
+  row('RESTA:', money(resta));
+  RAW(0x1B,0x45,0x01); RAW(0x1D,0x21,0x01); row('TOTAL:', money(s.total)); RAW(0x1D,0x21,0x00); RAW(0x1B,0x45,0x00);
+  LINE();
+  RAW(0x1B,0x61,0x01); T('** PENDIENTE DE PAGO **'); NL();
+  T('Pase a la caja por favor'); NL(); RAW(0x1B,0x61,0x00);
+  if(s.folio){ T('Folio #'+folioFmt(s.folio)+'   '); }
+  T('Atendio: asistente'); NL();
+  RAW(0x1B,0x61,0x01); NL(); T('Gracias por su preferencia!'); NL();
+  NL();NL();NL();NL();
+  RAW(0x1D,0x56,0x00);
+  return o;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ARRANQUE Y BOTONES
+   ═══════════════════════════════════════════════════════════ */
+async function empezar(){
+  $('#portada').style.display='none';
+  atendiendo = true;
+  HIST = []; pedido = { items:[], cliente:'', telefono:'' };
+  $('#pedido').classList.remove('hay');
+  iniciarEscucha();
+  decir(SALUDO);
+  await hablar(SALUDO);
+}
+
+$('#bEmpezar').onclick = async ()=>{
+  prepararAudio();          // el navegador solo deja crear audio tras un toque
+  await cargarTodo();
+  if(!PRENDIDO){
+    $('#portadaTxt').textContent = 'El asistente está apagado. Pase con una persona del mostrador, con gusto le atienden.';
+    return;
+  }
+  empezar();
+};
+
+$('#bHablar').onclick = ()=>{
+  callar();
+  if(!atendiendo){ empezar(); return; }
+  modo('escucha');
+  if(!escuchando && rec){ try{ rec.start(); escuchando=true; }catch(e){} }
+};
+
+$('#bReiniciar').onclick = async ()=>{
+  callar(); clearTimeout(temporizador); buffer='';
+  HIST=[]; pedido={ items:[], cliente:'', telefono:'' };
+  $('#pedido').classList.remove('hay'); eco('');
+  decir(SALUDO); await hablar(SALUDO);
+};
+
+/* ---------- admin ---------- */
+let TOKEN = '';
+function abrirAdmin(){ $('#velo').classList.add('on'); }
+function cerrarAdmin(){ $('#velo').classList.remove('on'); }
+$('#bAdmin1').onclick = abrirAdmin;
+$('#bAdmin2').onclick = abrirAdmin;
+$('#adCerrar1').onclick = cerrarAdmin;
+$('#adCerrar2').onclick = cerrarAdmin;
+
+async function api(obj){
+  const r = await fetch(ENDPOINT, { method:'POST', redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({ token:TOKEN, pin:PIN }, obj)) });
+  return await r.json();
+}
+
+$('#adEntrar').onclick = async ()=>{
+  const m = $('#adMsg1'); m.className='msg'; m.textContent='Entrando…';
+  try{
+    const d = await api({ action:'poslogin', usuario:$('#adU').value.trim(), clave:$('#adP').value });
+    if(!d || !d.ok){ m.className='msg mal'; m.textContent='Usuario o contraseña incorrectos.'; return; }
+    if(d.usuario.role !== 'admin'){ m.className='msg mal'; m.textContent='Solo los administradores pueden capacitar al asistente.'; return; }
+    TOKEN = d.token;
+    $('#adP').value='';
+    $('#adLogin').hidden = true; $('#adPanel').hidden = false;
+    await cargarTodo();
+    $('#adSaludo').value = SALUDO;
+    $('#adReglas').value = REGLAS;
+    marcarEstado();
+    cargarStats();
+  }catch(e){ m.className='msg mal'; m.textContent='Sin conexión.'; }
+};
+
+let prendidoEdit = true;
+function marcarEstado(){
+  prendidoEdit = PRENDIDO;
+  $('#adPrender').className = 'btn' + (prendidoEdit ? ' pri' : '');
+  $('#adApagar').className  = 'btn' + (prendidoEdit ? '' : ' fan');
+}
+$('#adPrender').onclick = ()=>{ PRENDIDO = true;  marcarEstado(); };
+$('#adApagar').onclick  = ()=>{ PRENDIDO = false; marcarEstado(); };
+
+async function cargarStats(){
+  try{
+    const d = await api({ action:'gbotstats' });
+    if(!d || !d.ok) return;
+    const tot = d.dias.reduce((a,x)=>a+x.ventas,0);
+    $('#adStats').innerHTML = '<label>Últimos 7 días</label>' +
+      d.dias.map(x=>'<span class="chip">'+x.dia.slice(5)+' · '+x.ventas+'</span>').join('') +
+      '<p class="ayuda">'+tot+' pedido(s) levantados por el asistente.</p>';
+  }catch(e){}
+}
+
+$('#adGuardar').onclick = async ()=>{
+  const m = $('#adMsg2'); m.className='msg'; m.textContent='Guardando…';
+  try{
+    const d = await api({ action:'gbotguardar',
+      reglas:$('#adReglas').value, saludo:$('#adSaludo').value, prendido:PRENDIDO });
+    if(d && d.ok){
+      REGLAS = $('#adReglas').value; SALUDO = $('#adSaludo').value || SALUDO;
+      m.className='msg ok'; m.textContent='Guardado. Ya lo está aplicando.';
+    } else { m.className='msg mal'; m.textContent = (d && d.error==='sesion') ? 'Su sesión venció. Entre otra vez.' : 'No se pudo guardar.'; }
+  }catch(e){ m.className='msg mal'; m.textContent='Sin conexión.'; }
+};
+
+/* La tablet no se duerme mientras atiende */
+(async function(){
+  try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){}
+})();
+
+cargarTodo();
+</script>
+</body>
+</html>
